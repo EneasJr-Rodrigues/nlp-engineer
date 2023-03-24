@@ -1,6 +1,6 @@
 version: '3'
 services:
-  myra-nlp:
+  nlp-engineer:
     build:
       context: .
       args:
