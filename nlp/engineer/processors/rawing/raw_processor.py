@@ -8,7 +8,7 @@ import pandas as pd
 
 
 class Rawing(RawingProcessor):
-
+    @decorators.record_performance(step_name='Rawing.call_process', macro_step=True)
     def __init__(self, 
                 recipe: dict,
                 df: DataFrame
@@ -23,13 +23,11 @@ class Rawing(RawingProcessor):
     def call_process(self, recipe, df):
         recipe_formated = convert_json(recipe)
         df = adjust_columns(df)
-        return recipe_formated, df
-
-
+        df = RawingProcessor.call(self, recipe=recipe_formated, df=df)
+        return df
 
 
 class RawingProcessor(Rawing):
-    @decorators.record_performance(step_name='RawingProcessor.call', macro_step=True)
     def call(self, recipe: dict, df: DataFrame) -> DataFrame:
         if not df:
             print('No data to process!')
