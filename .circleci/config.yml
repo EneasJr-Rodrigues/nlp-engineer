@@ -1,0 +1,85 @@
+version: 2.1
+jobs:
+  build_test:
+    docker:
+      - image: cimg/python:3.8
+    steps:
+      - checkout # checkout source code to working directory
+      - run:
+          name: Build_Test With artifacts
+          command: | # create whl and use pipenv to install dependencies
+            FILE="$(ls dist | grep .whl)"
+            echo $FILE
+            pip config list -v
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            pip install --upgrade twine
+
+            python3 setup.py bdist_wheel
+            sudo add-apt-repository universe -y
+            sudo apt-get update
+            sudo apt install -y python3-pip
+            sudo pip install pipenv
+            pipenv install dist/$FILE
+            pipenv install pytest
+      # - run:
+      #     command: | # Run test suite
+      #       pipenv run pytest
+  test_pypi_publish:
+    docker:
+      - image: cimg/python:3.8
+    steps:
+      - checkout # checkout source code to working directory
+      - run:
+          name: Build_Test 2 With artifacts
+          command: | # create whl, install twine and publish to Test PyPI
+            pip config list -v
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            pip install --upgrade twine
+
+            python3 setup.py bdist_wheel
+            sudo add-apt-repository universe -y
+            sudo apt-get update
+            sudo apt install -y python3-pip
+            sudo pip install pipenv
+            pipenv install twine
+            pipenv run twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD --repository-url https://test.pypi.org/legacy/ dist/* --verbose
+  pypi_publish:
+    docker:
+      - image: cimg/python:3.8
+    steps:
+      - checkout # checkout source code to working directory
+      - run:
+          name: Publishing artifacts
+          command: | # create whl, install twine and publish to PyPI
+            pip config list -v
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            pip install --upgrade twine
+
+            python3 setup.py bdist_wheel
+            sudo add-apt-repository universe -y
+            sudo apt-get update
+            sudo apt install -y python3-pip
+            sudo pip install pipenv
+            pipenv install twine
+            pipenv run twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD --repository-url https://upload.pypi.org/legacy/ dist/* --verbose      
+workflows:
+  build_test_publish:
+    jobs:
+      - build_test
+      - test_pypi_publish:
+          requires:
+            - build_test
+          filters:
+            branches:
+              only:
+                - main
+      - pypi_publish:
+          requires:
+            - build_test
+          filters:
+            branches:
+              only:
+                - main

@@ -1,0 +1,5 @@
+security:
+  encryption:
+    bits: 256
+    length: 12  # truncate hash lengths, for storage cost control purposes
+    token:

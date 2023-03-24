@@ -1,0 +1,26 @@
+version: '3'
+services:
+  myra-nlp:
+    build:
+      context: .
+      args:
+        config_path: config/$ENV
+        base_image: jupyter/pyspark-notebook:spark-3.1.2
+    container_name: nlp-engineer-container
+    user: root
+    image: engineer/$SERVICE
+    working_dir: /opt/engineer/$SERVICE
+    env_file:
+      - config/$ENV/.env
+    #  - .env
+    ports:
+      - ${JUPYTER_PORT-8082}:${JUPYTER_PORT-8082}
+      - ${SPARK_UI_PORT-4041}:${SPARK_UI_PORT-4041}
+    volumes:
+      - .:/opt/engineer/$SERVICE
+      - .:/src # Used by pre-commit on pytest step
+      - ./config/$ENV:/home/jovyan/engineer
+      - ./datalake:/datalake
+      - ./datalake/scikit_learn_data:/home/jovyan/scikit_learn_data
+      - ./config/$ENV:/opt/engineer/configs/cluster/
+    entrypoint: ./config/$ENV/actions/run.sh
